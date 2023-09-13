@@ -3,9 +3,13 @@ const path = require("path");
 
 const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
+
 const app = express();
 
-const bcrypt = require('bcrypt')
+app.use(express.json());
+
+const bcrypt = require('bcrypt');
+const { log } = require("console");
 
 const dbPath = path.join(__dirname, "tarunsuresh.db");
 
@@ -32,21 +36,23 @@ app.post("/register", async (req, res) => {
   const { username, password } = req.body;
 
   const checkUsernameQuery = `
-  SELECT username from users WHERE username= '${username}';
+  SELECT username FROM
+   users WHERE username = '${username}';
   `;
 
   const checkUser = await db.get(checkUsernameQuery);
 
-  if (checkUser === null) {
+  console.log(checkUser);
+
+  if (checkUser === undefined) {
     if (password.length < 6) {
       res.status(400);
       res.send("Password is too short");
     } else {
-
         const hashedPassword = await bcrypt.hash(password, 10); 
         const createUserQuery = `
           INSERT INTO users(username, password)
-          VALUES (${username}, ${hashedPassword});
+          VALUES ('${username}', '${hashedPassword}');
           `;
 
         const dbResponse = await db.run(createUserQuery);
@@ -58,3 +64,12 @@ app.post("/register", async (req, res) => {
     res.send("User already exists");
   }
 });
+
+app.get("/", async (req, res) => {
+  getAllUsersQuery = `
+    SELECT * FROM users;
+  `;
+
+  const userArray = await db.all(getAllUsersQuery);
+  res.send(userArray);
+})

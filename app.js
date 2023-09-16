@@ -9,7 +9,8 @@ const app = express();
 app.use(express.json());
 
 const bcrypt = require('bcrypt');
-const { log } = require("console");
+
+const jwt = require('jsonwebtoken')
 
 const dbPath = path.join(__dirname, "tarunsuresh.db");
 
@@ -42,8 +43,6 @@ app.post("/register", async (req, res) => {
 
   const checkUser = await db.get(checkUsernameQuery);
 
-  console.log(checkUser);
-
   if (checkUser === undefined) {
     if (password.length < 6) {
       res.status(400);
@@ -64,6 +63,30 @@ app.post("/register", async (req, res) => {
     res.send("User already exists");
   }
 });
+
+app.post("/login", async (req, res) => {
+  const {username, password} = req.body
+  
+  const getUserQuery = `SELECT * FROM users WHERE username = '${username}';`;
+
+  const  userDetails = await db.get(getUserQuery);
+
+  if (userDetails === undefined) {
+    res.status(400);
+    res.send('Invalid Username');
+  } else {
+    const isPasswordMatched =  await bcrypt.compare(password, userDetails.password)
+    if (isPasswordMatched === true) {
+
+      const jwtToken = jwt.sign(userDetails, 'ADMIN_123');
+      res.send({ jwtToken });
+
+    } else {
+      res.status(400);
+      res.send('Invalid Password');
+    }
+  }
+})
 
 app.get("/", async (req, res) => {
   getAllUsersQuery = `

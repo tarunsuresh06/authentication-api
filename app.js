@@ -18,7 +18,7 @@ app.use((req, res, next) => {
 
 const bcrypt = require('bcrypt');
 
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
 const dbPath = path.join(__dirname, "tarunsuresh.db");
 
@@ -54,7 +54,7 @@ app.post("/register", async (req, res) => {
   if (checkUser === undefined) {
     if (password.length < 6) {
       res.status(400);
-      res.send("Password is too short");
+      res.send({'error_msg': 'Password is too short'});
     } else {
         const hashedPassword = await bcrypt.hash(password, 10); 
         const createUserQuery = `
@@ -68,32 +68,31 @@ app.post("/register", async (req, res) => {
       }
   } else {
     res.status(400);
-    res.send("User already exists");
+    res.send({'error_msg': 'user already exists'});
   }
 });
 
 app.post("/login", async (req, res) => {
+
   const {username, password} = req.body
   
   const getUserQuery = `SELECT * FROM users WHERE username = '${username}';`;
 
   const  userDetails = await db.get(getUserQuery);
 
-  console.log(userDetails);
-
   if (userDetails === undefined) {
     res.status(400);
-    res.send('Invalid Username');
+    res.send({'error_msg': 'Invalid Username'});
   } else {
     const isPasswordMatched =  await bcrypt.compare(password, userDetails.password)
     if (isPasswordMatched === true) {
 
       const jwtToken = jwt.sign(userDetails, 'ADMIN_123');
-      res.send({ jwtToken });
+      res.send({ 'jwt_token': jwtToken });
 
     } else {
       res.status(400);
-      res.send('Invalid Password');
+      res.send({'error_msg': 'Invalid Password'});
     }
   }
 })
@@ -104,5 +103,5 @@ app.get("/", async (req, res) => {
   `;
 
   const userArray = await db.all(getAllUsersQuery);
-  res.send(userArray);
+  res.send({'user': userArray});
 })

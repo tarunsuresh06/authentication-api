@@ -79,6 +79,8 @@ app.post("/login", async (req, res) => {
 
   const  userDetails = await db.get(getUserQuery);
 
+  console.log(userDetails);
+
   if (userDetails === undefined) {
     res.status(400);
     res.send('Invalid Username');
